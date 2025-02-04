@@ -9,6 +9,8 @@ export interface Point {
 export interface Branch {
   start: Point;
   end: Point;
+  color: string;
+  thickness: number;
 }
 
 export interface TreeParams {
@@ -18,6 +20,8 @@ export interface TreeParams {
   length: number;
   level: number;
   maxLevel?: number;
+  currentColor: { r: number, g: number, b: number };
+  thickness: number;
 }
 
 function calculateBranchEndpoint(start: Point, angle: number, length: number): Point {
@@ -29,30 +33,34 @@ function calculateBranchEndpoint(start: Point, angle: number, length: number): P
 }
 
 export function calculateTree(params: TreeParams): Branch[] {
-  const { x1, y1, angle, length, level, maxLevel = 11 } = params;
+  const { x1, y1, angle, length, level, maxLevel = 13 } = params;
   if (level >= maxLevel) { return []; }
 
   const start: Point = { x: x1, y: y1 };
   const end = calculateBranchEndpoint(start, angle, length);
-  const currentBranch: Branch = { start, end };
+  const currentBranch: Branch = { start, end, color: `rgb(${params.currentColor.r}, ${params.currentColor.g}, ${params.currentColor.b})`, thickness: params.thickness };
 
   return [
-    currentBranch,
     ...calculateTree({
       x1: end.x,
       y1: end.y,
-      angle: angle - 20,
+      angle: angle - Math.random() * 50,
       length: length * 0.8,
       level: level + 1,
-      maxLevel
+      maxLevel,
+      currentColor: { r: params.currentColor.r, g: params.currentColor.g + 15, b: params.currentColor.b },
+      thickness: params.thickness * 0.8
     }),
     ...calculateTree({
       x1: end.x,
       y1: end.y,
-      angle: angle + 20,
+      angle: angle + Math.random() * 50,
       length: length * 0.8,
       level: level + 1,
-      maxLevel
-    })
+      maxLevel,
+      currentColor: { r: params.currentColor.r, g: params.currentColor.g + 15, b: params.currentColor.b },
+      thickness: params.thickness * 0.8
+    }),
+    currentBranch,
   ];
 }

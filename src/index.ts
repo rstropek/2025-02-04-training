@@ -4,13 +4,18 @@ import { calculateTree, Branch, TreeParams } from "./calculate_tree";
 const app = express();
 const port = 3000;
 
-function branchToSvgLine(branch: Branch): string {
-  return `<line x1="${branch.start.x}" y1="${branch.start.y}" x2="${branch.end.x}" y2="${branch.end.y}" stroke="black" />`;
+function branchToSvgLine(branch: Branch, thickness: number): string {
+  return `<line x1="${branch.start.x}" y1="${branch.start.y}" x2="${branch.end.x}" y2="${branch.end.y}" stroke="${branch.color}" stroke-width="${branch.thickness}" />`;
 }
 
 function generateSvgTree(params: TreeParams): string {
   const branches = calculateTree(params);
-  return branches.map(branchToSvgLine).join("");
+  let thickness = 10;
+  return branches.map((branch, index) => {
+    const svgLine = branchToSvgLine(branch, thickness);
+    thickness *= 0.8; // Reduce thickness for each branch
+    return svgLine;
+  }).join("");
 }
 
 function generateHtml(svg: string): string {
@@ -35,6 +40,8 @@ app.get("/", (req, res) => {
     angle: -90,
     length: 100,
     level: 0,
+    currentColor: { r: 100, g: 100, b: 0 },
+    thickness: 25
   })}</svg>`;
   res.send(generateHtml(svg));
 });
