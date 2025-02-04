@@ -1,57 +1,16 @@
 import express from "express";
-import { degreeToRadian } from "./math_helpers";
+import { calculateTree, Branch, TreeParams } from "./calculate_tree";
 
 const app = express();
 const port = 3000;
 
-type LinePoint = {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-};
-
-function calculateBranchPoints(x1: number, y1: number, angle: number, length: number): LinePoint {
-  const rad = degreeToRadian(angle);
-  const x2 = x1 + length * Math.cos(rad);
-  const y2 = y1 + length * Math.sin(rad);
-  return { x1, y1, x2, y2 };
+function branchToSvgLine(branch: Branch): string {
+  return `<line x1="${branch.start.x}" y1="${branch.start.y}" x2="${branch.end.x}" y2="${branch.end.y}" stroke="black" />`;
 }
 
-type TreeParams = {
-  x1: number;
-  y1: number;
-  angle: number;
-  length: number;
-  level: number;
-  maxLevel?: number;
-};
-
-function generateFractalTree(params: TreeParams): string {
-  const { x1, y1, angle, length, level, maxLevel = 11 } = params;
-  if (level >= maxLevel) { return ""; }
-
-  const currentBranch = calculateBranchPoints(x1, y1, angle, length);
-  const line = `<line x1="${currentBranch.x1}" y1="${currentBranch.y1}" x2="${currentBranch.x2}" y2="${currentBranch.y2}" stroke="black" />`;
-
-  const leftBranches = generateFractalTree({
-    x1: currentBranch.x2,
-    y1: currentBranch.y2,
-    angle: angle - 20,
-    length: length * 0.8,
-    level: level + 1,
-    maxLevel
-  });
-  const rightBranches = generateFractalTree({
-    x1: currentBranch.x2,
-    y1: currentBranch.y2,
-    angle: angle + 20,
-    length: length * 0.8,
-    level: level + 1,
-    maxLevel
-  });
-
-  return line + leftBranches + rightBranches;
+function generateSvgTree(params: TreeParams): string {
+  const branches = calculateTree(params);
+  return branches.map(branchToSvgLine).join("");
 }
 
 function generateHtml(svg: string): string {
@@ -70,7 +29,7 @@ function generateHtml(svg: string): string {
 }
 
 app.get("/", (req, res) => {
-  const svg = `<svg width="800" height="800">${generateFractalTree({
+  const svg = `<svg width="800" height="800">${generateSvgTree({
     x1: 400,
     y1: 500,
     angle: -90,
