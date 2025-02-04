@@ -24,7 +24,7 @@ export interface TreeParams {
   thickness: number;
 }
 
-function calculateBranchEndpoint(start: Point, angle: number, length: number): Point {
+export function calculateBranchEndpoint(start: Point, angle: number, length: number): Point {
   const rad = degreeToRadian(angle);
   return {
     x: start.x + length * Math.cos(rad),
