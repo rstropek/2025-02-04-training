@@ -1,8 +1,58 @@
 import express from "express";
-import { calculateFractalTree, LinePoint } from "./calculate_tree";
+import { degreeToRadian } from "./math_helpers";
 
 const app = express();
 const port = 3000;
+
+type LinePoint = {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+};
+
+function calculateBranchPoints(x1: number, y1: number, angle: number, length: number): LinePoint {
+  const rad = degreeToRadian(angle);
+  const x2 = x1 + length * Math.cos(rad);
+  const y2 = y1 + length * Math.sin(rad);
+  return { x1, y1, x2, y2 };
+}
+
+type TreeParams = {
+  x1: number;
+  y1: number;
+  angle: number;
+  length: number;
+  level: number;
+  maxLevel?: number;
+};
+
+function generateFractalTree(params: TreeParams): string {
+  const { x1, y1, angle, length, level, maxLevel = 11 } = params;
+  if (level >= maxLevel) { return ""; }
+
+  const currentBranch = calculateBranchPoints(x1, y1, angle, length);
+  const line = `<line x1="${currentBranch.x1}" y1="${currentBranch.y1}" x2="${currentBranch.x2}" y2="${currentBranch.y2}" stroke="black" />`;
+
+  const leftBranches = generateFractalTree({
+    x1: currentBranch.x2,
+    y1: currentBranch.y2,
+    angle: angle - 20,
+    length: length * 0.8,
+    level: level + 1,
+    maxLevel
+  });
+  const rightBranches = generateFractalTree({
+    x1: currentBranch.x2,
+    y1: currentBranch.y2,
+    angle: angle + 20,
+    length: length * 0.8,
+    level: level + 1,
+    maxLevel
+  });
+
+  return line + leftBranches + rightBranches;
+}
 
 function generateHtml(svg: string): string {
   return `
@@ -19,25 +69,14 @@ function generateHtml(svg: string): string {
     </html>`;
 }
 
-function linePointToSVG(point: LinePoint): string {
-  return `<line x1="${point.x1}" y1="${point.y1}" x2="${point.x2}" y2="${point.y2}" stroke="black" />`;
-}
-
-function generateFractalTree(): string {
-  const points = calculateFractalTree({
+app.get("/", (req, res) => {
+  const svg = `<svg width="800" height="800">${generateFractalTree({
     x1: 400,
     y1: 500,
     angle: -90,
     length: 100,
     level: 0,
-  });
-
-  const lines = points.map(linePointToSVG).join("");
-  return `<svg width="800" height="800">${lines}</svg>`;
-}
-
-app.get("/", (req, res) => {
-  const svg = generateFractalTree();
+  })}</svg>`;
   res.send(generateHtml(svg));
 });
 
